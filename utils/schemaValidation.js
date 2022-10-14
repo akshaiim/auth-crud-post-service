@@ -1,5 +1,3 @@
-
-
 const validateSchema = (schema, property = 'body') => (req, res, next) => {
   const options = {
     abortEarly: false, // include all errors
