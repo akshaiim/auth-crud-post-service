@@ -13,9 +13,9 @@ const registerUser = async (req, res) => {
     }
 
     // check if user already exist
-    const oldUser = await userModel.findOne({ email });
+    const oldUser = await userModel.find({ $or: [{ email, username }] }).catch((e) => { throw e; });
 
-    if (oldUser) {
+    if (oldUser?.length) {
       return res.status(409).send('User Already Exist. Please Login');
     }
 
@@ -24,8 +24,8 @@ const registerUser = async (req, res) => {
 
     // Create user in our database
     const user = await userModel.create({
-      username,
-      email: email.toLowerCase(), // sanitize: convert email to lowercase
+      username: username.toLowerCase(),
+      email: email.toLowerCase(), // sanitize: convert email username to lowercase
       password: encryptedPassword,
     });
 
@@ -39,6 +39,7 @@ const registerUser = async (req, res) => {
     return res.status(201).json({ user, token });
   } catch (err) {
     console.log(err);
+    res.status(500).send({ message: err.message });
   }
 };
 
@@ -67,6 +68,7 @@ const loginUser = async (req, res) => {
     res.status(400).send('Invalid Credentials');
   } catch (err) {
     console.log(err);
+    res.status(500).send({ message: err.message });
   }
 };
 
