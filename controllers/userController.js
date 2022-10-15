@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable consistent-return */
 const bcrypt = require('bcryptjs');
@@ -30,7 +31,7 @@ const registerUser = async (req, res) => {
     });
 
     // Create token
-    const token = jwt.sign({ _id: user._id, username }, process.env.SECRET_KEY);
+    const token = jwt.sign({ _id: user._id, username }, process.env.SECRET_KEY, { expiresIn: process.env.expiryTime });
 
     // save user token
     user.token = token;
@@ -57,7 +58,7 @@ const loginUser = async (req, res) => {
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // Create token
-      const token = jwt.sign({ _id: user._id, username: user.username }, process.env.SECRET_KEY);
+      const token = jwt.sign({ _id: user._id, username: user.username }, process.env.SECRET_KEY, { expiresIn: process.env.expiryTime });
 
       // save user token
       user.token = token;
