@@ -14,7 +14,7 @@ const registerUser = async (req, res) => {
     }
 
     // check if user already exist
-    const oldUser = await userModel.find({ $or: [{ email, username }] }).catch((e) => { throw e; });
+    const oldUser = await userModel.find({ email }).catch((e) => { throw e; });
 
     if (oldUser?.length) {
       return res.status(409).send('User Already Exist. Please Login');
