@@ -17,6 +17,11 @@ const isOwner = async (id, user) => {
 };
 
 const getPostsByQueryparams = async (query) => {
+  // checking if tags params has multiple tags value in query
+  if(query.tags && query.tags.split(',').length){
+  let tagsArray = query.tags.split(',')
+  query.tags = {$in: tagsArray}
+  }
   if (query.startDate && query.endDate) {
     const startDate = moment.utc(query.startDate).format(); // req.query.startDate = 2016-09-25
     const endDate = moment.utc(query.endDate).format(); // req.query.endDate = 2016-09-25
