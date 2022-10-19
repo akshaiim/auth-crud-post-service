@@ -1,19 +1,35 @@
+/* eslint-disable eqeqeq */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable consistent-return */
 const postModel = require('../models/postModels');
-const { isOwner, getPostsByQueryparams } = require('../utils/utilFunctions');
+const {
+  isOwner, getPostsByQueryparams, uploadImagesToCloudinary, checkImageValidity,
+} = require('../utils/utilFunctions');
 
 const addPosts = async (req, res) => {
   try {
     const {
       image, title, description, tags,
     } = req.body;
+    let imageUrl = '';
+    // checking if image url or base64 data is valid
+    const validImageUrl = await checkImageValidity(image).catch((err) => console.log(err));
+
+    if (validImageUrl && !/\.(jpg|jpeg|png)$/.test(image)) {
+      imageUrl = await uploadImagesToCloudinary(image).catch((err) => console.log(err));
+    }
+    if (req.file?.path) {
+      imageUrl = await uploadImagesToCloudinary(req.file.path).catch((err) => console.log(err));
+    }
     // getting userId and username from req.user
     const { _id, username } = req.user;
+    // if image not in correct format
+    if (!(validImageUrl ? image : imageUrl.secure_url)) return res.status(400).send('Please add valid image format.');
     // Create post in our database
     const post = await postModel.create({
       username,
-      image,
+      // if image url is passed in image params of request add imageUrl else add cloduinary url
+      image: validImageUrl ? image : imageUrl.secure_url,
       title,
       description,
       tags,
@@ -60,11 +76,24 @@ const updatePost = async (req, res) => {
     id, image, title, description, tags,
   } = req.body;
   const user = req.user._id;
+  let imageUrl = '';
+  // checking if image url or base64 data is valid
+  const validImageUrl = await checkImageValidity(image).catch((err) => console.log(err));
+
+  if (validImageUrl && !/\.(jpg|jpeg|png)$/.test(image)) {
+    imageUrl = await uploadImagesToCloudinary(image).catch((err) => console.log(err));
+  }
+  if (req.file?.path) {
+    imageUrl = await uploadImagesToCloudinary(req.file.path).catch((err) => console.log(err));
+  }
   const toUpdate = {};
   if (image) toUpdate.image = image;
+  if (imageUrl?.secure_url) toUpdate.image = imageUrl.secure_url;
   if (description) toUpdate.description = description;
   if (title) toUpdate.title = title;
-  if (tags.length) toUpdate.tags = tags;
+  if (tags?.length) toUpdate.tags = tags;
+  // if image key added in request but image data not in correct format
+  if (image && !(validImageUrl ? image : imageUrl.secure_url)) return res.status(400).send('Please add valid image format.');
   try {
     // checking if requesting user is the creator/owner of the doc.
     const authorised = await isOwner(id, user);

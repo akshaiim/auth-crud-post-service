@@ -33,11 +33,8 @@ const registerUser = async (req, res) => {
     // Create token
     const token = jwt.sign({ _id: user._id, username }, process.env.SECRET_KEY, { expiresIn: process.env.expiryTime });
 
-    // save user token
-    user.token = token;
-
     // return new user
-    return res.status(201).json({ user, token });
+    return res.status(201).json({ token });
   } catch (err) {
     console.log(err);
     res.status(500).send({ message: err.message });
@@ -60,11 +57,8 @@ const loginUser = async (req, res) => {
       // Create token
       const token = jwt.sign({ _id: user._id, username: user.username }, process.env.SECRET_KEY, { expiresIn: process.env.expiryTime });
 
-      // save user token
-      user.token = token;
-
       // user
-      return res.status(200).json({ user, token });
+      return res.status(200).json({ token });
     }
     res.status(400).send('Invalid Credentials');
   } catch (err) {

@@ -1,6 +1,9 @@
+/* eslint-disable consistent-return */
 /* eslint-disable no-param-reassign */
 /* eslint-disable max-len */
 const moment = require('moment');
+const jimp = require('jimp');
+const cloudinary = require('cloudinary').v2;
 const postModel = require('../models/postModels');
 
 const isOwner = async (id, user) => {
@@ -18,9 +21,9 @@ const isOwner = async (id, user) => {
 
 const getPostsByQueryparams = async (query) => {
   // checking if tags params has multiple tags value in query
-  if(query.tags && query.tags.split(',').length){
-  let tagsArray = query.tags.split(',')
-  query.tags = {$in: tagsArray}
+  if (query.tags && query.tags.split(',').length) {
+    const tagsArray = query.tags.split(',');
+    query.tags = { $in: tagsArray };
   }
   if (query.startDate && query.endDate) {
     const startDate = moment.utc(query.startDate).format(); // req.query.startDate = 2016-09-25
@@ -36,4 +39,52 @@ const getPostsByQueryparams = async (query) => {
   // console.log(posts);
   return posts;
 };
-module.exports = { isOwner, getPostsByQueryparams };
+
+// function to upload image base64 data or uploaded image to cloudinary
+const uploadImagesToCloudinary = async (image) => {
+  cloudinary.config({
+    cloud_name: process.env.cloud_name,
+    api_key: process.env.api_key,
+    api_secret: process.env.api_secret,
+    secure: true,
+  });
+
+  const data = await cloudinary.uploader.upload(image,
+    {
+      folder: 'postPhoto',
+      allowed_formats: ['png', 'jpg', 'jpeg'],
+    },
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return err;
+      }
+
+      console.log(result);
+      return result.secure_url;
+    });
+  return data;
+};
+
+// checking if image base64 data or image url is valid
+const checkImageValidity = async (str) => {
+  const validFormat = /\.(jpg|jpeg|png)$/.test(str);
+  if (validFormat) return validFormat;
+  const buf = Buffer.from(str.split(',')[1], 'base64');
+  let result = false;
+  if (buf && !validFormat) {
+    result = jimp.read(buf).then((img) => {
+      if (img.bitmap.width > 0 && img.bitmap.height > 0) {
+        return true;
+      }
+    }).catch((err) => {
+      console.log(err);
+      return true;
+    });
+  }
+
+  return result;
+};
+module.exports = {
+  isOwner, getPostsByQueryparams, uploadImagesToCloudinary, checkImageValidity,
+};
