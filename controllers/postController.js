@@ -16,10 +16,16 @@ const addPosts = async (req, res) => {
     const validImageUrl = await checkImageValidity(image).catch((err) => console.log(err));
 
     if (validImageUrl && !/\.(jpg|jpeg|png)$/.test(image)) {
-      imageUrl = await uploadImagesToCloudinary(image).catch((err) => console.log(err));
+      imageUrl = await uploadImagesToCloudinary(image).catch((err) => {
+        console.log(err);
+        throw err;
+      });
     }
     if (req.file?.path) {
-      imageUrl = await uploadImagesToCloudinary(req.file.path).catch((err) => console.log(err));
+      imageUrl = await uploadImagesToCloudinary(req.file.path).catch((err) => {
+        console.log(err);
+        throw err;
+      });
     }
     // getting userId and username from req.user
     const { _id, username } = req.user;
@@ -77,24 +83,30 @@ const updatePost = async (req, res) => {
   } = req.body;
   const user = req.user._id;
   let imageUrl = '';
-  // checking if image url or base64 data is valid
-  const validImageUrl = await checkImageValidity(image).catch((err) => console.log(err));
-
-  if (validImageUrl && !/\.(jpg|jpeg|png)$/.test(image)) {
-    imageUrl = await uploadImagesToCloudinary(image).catch((err) => console.log(err));
-  }
-  if (req.file?.path) {
-    imageUrl = await uploadImagesToCloudinary(req.file.path).catch((err) => console.log(err));
-  }
-  const toUpdate = {};
-  if (image) toUpdate.image = image;
-  if (imageUrl?.secure_url) toUpdate.image = imageUrl.secure_url;
-  if (description) toUpdate.description = description;
-  if (title) toUpdate.title = title;
-  if (tags?.length) toUpdate.tags = tags;
-  // if image key added in request but image data not in correct format
-  if (image && !(validImageUrl ? image : imageUrl.secure_url)) return res.status(400).send('Please add valid image format.');
   try {
+  // checking if image url or base64 data is valid
+    const validImageUrl = await checkImageValidity(image).catch((err) => console.log(err));
+
+    if (validImageUrl && !/\.(jpg|jpeg|png)$/.test(image)) {
+      imageUrl = await uploadImagesToCloudinary(image).catch((err) => {
+        console.log(err);
+        throw err;
+      });
+    }
+    if (req.file?.path) {
+      imageUrl = await uploadImagesToCloudinary(req.file.path).catch((err) => {
+        console.log(err);
+        throw err;
+      });
+    }
+    const toUpdate = {};
+    if (image) toUpdate.image = image;
+    if (imageUrl?.secure_url) toUpdate.image = imageUrl.secure_url;
+    if (description) toUpdate.description = description;
+    if (title) toUpdate.title = title;
+    if (tags?.length) toUpdate.tags = tags;
+    // if image key added in request but image data not in correct format
+    if (image && !(validImageUrl ? image : imageUrl.secure_url)) return res.status(400).send('Please add valid image format.');
     // checking if requesting user is the creator/owner of the doc.
     const authorised = await isOwner(id, user);
     // console.log(authorised);
