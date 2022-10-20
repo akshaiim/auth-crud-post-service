@@ -59,8 +59,6 @@ const uploadImagesToCloudinary = async (image) => {
         console.log(err);
         return err;
       }
-
-      console.log(result);
       return result.secure_url;
     });
   return data;

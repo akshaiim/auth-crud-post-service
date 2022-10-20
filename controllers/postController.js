@@ -35,7 +35,7 @@ const addPosts = async (req, res) => {
     const post = await postModel.create({
       username,
       // if image url is passed in image params of request add imageUrl else add cloduinary url
-      image: validImageUrl ? image : imageUrl.secure_url,
+      image: imageUrl?.secure_url ? imageUrl.secure_url : image,
       title,
       description,
       tags,
